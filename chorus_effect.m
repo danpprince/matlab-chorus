@@ -24,22 +24,25 @@ ringbuffer = RingBuffer(delay_length_samples + modulation_depth_samples);
 
 %%
 
+% Argument for sin() modulation function. Converts the loop's control variable into 
+% the appropriate argument in radians to achieve the specified modulation rate
 modulation_argument = 2 * pi * modulation_rate / sample_rate;
 
-for i = 1:(length(input))
-
+tic
+parfor i = 1:(length(input))
+	% Find index to read from for modulated output
 	modulated_sample = round(modulation_depth_samples * sin(modulation_argument * i));
-
 	modulated_output(i) = ringbuffer.access(modulated_sample);
 
+	% Save the input's current value in the ring buffer and advance to the next value
 	ringbuffer.set(input(i));
-
 	ringbuffer.increment;
 end
+toc
 
 summed_output = ((1 - dry_wet_balance) * input(:, 1) ) + (dry_wet_balance * modulated_output);
 
-xmin = 1; xmax = length(input);
+xmin =  1; xmax = length(input);
 ymin = -1; ymax = 1;
 
 subplot(3, 1, 1); plot(input, 'b'); axis([xmin, xmax, ymin, ymax]);

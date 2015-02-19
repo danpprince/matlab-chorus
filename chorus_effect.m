@@ -29,7 +29,7 @@ ringbuffer = RingBuffer(delay_length_samples + modulation_depth_samples);
 modulation_argument = 2 * pi * modulation_rate / sample_rate;
 
 tic
-parfor i = 1:(length(input))
+for i = 1:(length(input))
 	% Find index to read from for modulated output
 	modulated_sample = round(modulation_depth_samples * sin(modulation_argument * i));
 	modulated_output(i) = ringbuffer.access(modulated_sample);

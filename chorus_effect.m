@@ -19,33 +19,22 @@ delay_length_samples     = round(delay_length * sample_rate);
 modulation_depth_samples = round(modulation_depth * sample_rate);
 
 modulated_output = zeros(length(input), 1);
-delay_buffer     = zeros(1, delay_length_samples + modulation_depth_samples);
 
-delay_buffer_index = 1;
+ringbuffer = RingBuffer(delay_length_samples + modulation_depth_samples);
 
 %%
 
-delay_buffer_indicies = 1:length(delay_buffer);
+modulation_argument = 2 * pi * modulation_rate / sample_rate;
 
 for i = 1:(length(input))
 
-	modulated_sample = round(modulation_depth_samples * sin(2 * pi * i * modulation_rate / sample_rate) + delay_buffer_index) - modulation_depth_samples;
+	modulated_sample = round(modulation_depth_samples * sin(modulation_argument * i));
 
-	modulated_sample = mod(modulated_sample, length(delay_buffer));
-	if (modulated_sample == 0)
-		modulated_sample = 1;
-	end
+	modulated_output(i) = ringbuffer.access(modulated_sample);
 
-	modulated_output(i) = delay_buffer(modulated_sample);
+	ringbuffer.set(input(i));
 
-	delay_buffer(delay_buffer_index) = input(i);
-
-	% Advance the buffer index
-	delay_buffer_index = 1 + delay_buffer_index;
-	if (delay_buffer_index > length(delay_buffer))
-		delay_buffer_index = 1;
-	end
-
+	ringbuffer.increment;
 end
 
 summed_output = ((1 - dry_wet_balance) * input(:, 1) ) + (dry_wet_balance * modulated_output);

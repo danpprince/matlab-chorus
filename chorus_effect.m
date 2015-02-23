@@ -1,13 +1,12 @@
 close all; clear all; clc
 
 %% Parameters
-
-filename = 'Joey sassy guitar.wav';
-delay_length     = 0.030;  % sec
-modulation_depth = 0.008;  % sec
-modulation_rate  = 0.25;   % Hz
-dry_wet_balance  = 0.40;   % 0.0 for all dry, 1.0 for all wet
-
+	filename = 'Joey sassy guitar.wav';
+	delay_length     = 0.025;  % sec
+	modulation_depth = 0.007;  % sec
+	modulation_rate  = 0.25;   % Hz
+	feedback         = 0.50;   % Percent
+	dry_wet_balance  = 0.35;   % 0.0 for all dry, 1.0 for all wet
 %%
 
 [input, sample_rate] = audioread(filename);
@@ -31,17 +30,26 @@ modulation_argument = 2 * pi * modulation_rate / sample_rate;
 tic
 for i = 1:(length(input))
 	% Find index to read from for modulated output
-	modulated_sample = round(modulation_depth_samples * sin(modulation_argument * i));
-	modulated_output(i) = ringbuffer.access(modulated_sample);
+	modulated_sample = modulation_depth_samples * sin(modulation_argument * i);
+	modulated_sample = modulated_sample - delay_length_samples;
+
+	% Get values to interpolate between
+	interpolation_values = [ringbuffer.access(floor(modulated_sample)), ...
+	                        ringbuffer.access( ceil(modulated_sample))];
+
+	query_sample = modulated_sample - floor(modulated_sample) + 1;
+	modulated_output(i) = interp1(interpolation_values, query_sample);
 
 	% Save the input's current value in the ring buffer and advance to the next value
-	ringbuffer.set(input(i));
+	ringbuffer.set(input(i) + modulated_output(i) * feedback);
 	ringbuffer.increment;
 end
 toc
 
 summed_output = ((1 - dry_wet_balance) * input(:, 1) ) + (dry_wet_balance * modulated_output);
 
+
+% Plot the input, modulated signal, and summed output signal
 xmin =  1; xmax = length(input);
 ymin = -1; ymax = 1;
 
@@ -56,4 +64,7 @@ title('summed input and modulation');
 
 
 % Uncomment below to play the summed output
-sound(summed_output, sample_rate)
+% sound(summed_output, sample_rate)
+
+audiowrite(strcat(filename, ' - summed output.wav'),    summed_output,    sample_rate);
+audiowrite(strcat(filename, ' - modulated output.wav'), modulated_output, sample_rate);

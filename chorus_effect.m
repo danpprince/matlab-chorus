@@ -13,7 +13,7 @@ modulation_depth_samples = round(modulation_depth * sample_rate);
 
 modulated_output = zeros(length(input), 1);
 
-ringbuffer = RingBuffer(delay_length_samples + modulation_depth_samples);
+delay_buffer = zeros(delay_length_samples + modulation_depth_samples, 1);
 
 %%
 
@@ -25,18 +25,18 @@ tic
 for i = 1:(length(input))
 	% Find index to read from for modulated output
 	modulated_sample = modulation_depth_samples * sin(modulation_argument * i);
-	modulated_sample = modulated_sample - delay_length_samples;
+	modulated_sample = modulated_sample + delay_length_samples;
 
 	% Get values to interpolate between
-	interpolation_values = [ringbuffer.access(floor(modulated_sample)), ...
-	                        ringbuffer.access( ceil(modulated_sample))];
+	interpolation_values = [delay_buffer(floor(modulated_sample)), ...
+	                        delay_buffer( ceil(modulated_sample))];
 
 	query_sample = modulated_sample - floor(modulated_sample) + 1;
 	modulated_output(i) = interp1(interpolation_values, query_sample);
 
 	% Save the input's current value in the ring buffer and advance to the next value
-	ringbuffer.set(input(i) + modulated_output(i) * feedback);
-	ringbuffer.increment;
+	new_sample = (input(i) + modulated_output(i) * feedback);
+	delay_buffer = [ new_sample; delay_buffer(1 : length(delay_buffer)-1) ];
 end
 toc
 

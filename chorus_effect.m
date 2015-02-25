@@ -1,19 +1,15 @@
 close all; clear all; clc
 
-% Load effect parameters from other file
+% Load effect parameters from parameters file
 chorus_effect_parameters;
 
 [input, sample_rate] = audioread(filename);
-
-% If below uncommented, only use first two seconds of input
-% input = input(1:sample_rate*2);
 
 delay_length_samples     = round(delay_length * sample_rate);
 modulation_depth_samples = round(modulation_depth * sample_rate);
 
 modulated_output = zeros(length(input), 1);
-
-delay_buffer = zeros(delay_length_samples + modulation_depth_samples, 1);
+delay_buffer     = zeros(delay_length_samples + modulation_depth_samples, 1);
 
 %%
 
@@ -57,8 +53,8 @@ subplot(3, 1, 3); plot(summed_output, 'g');  axis([xmin, xmax, ymin, ymax]);
 title('summed input and modulation');
 
 
-% Uncomment below to play the summed output
-% sound(summed_output, sample_rate)
+if play_output
+	sound(summed_output, sample_rate)
+end
 
-audiowrite(strcat(filename, ' - summed output.wav'),    summed_output,    sample_rate);
-audiowrite(strcat(filename, ' - modulated output.wav'), modulated_output, sample_rate);
+audiowrite(output_filename, summed_output, sample_rate);

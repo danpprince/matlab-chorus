@@ -27,11 +27,13 @@ for i = 1:(length(input))
 	modulated_sample = modulated_sample + delay_length_samples;
 
 	% Get values to interpolate between
-	interpolation_values = [delay_buffer(floor(modulated_sample)), ...
-	                        delay_buffer( ceil(modulated_sample))];
+	interp_y1 = delay_buffer(floor(modulated_sample));
+	interp_y2 = delay_buffer( ceil(modulated_sample));
 
-	query_sample = modulated_sample - floor(modulated_sample) + 1;
-	modulated_output(i) = interp1(interpolation_values, query_sample);
+	query_sample = modulated_sample - floor(modulated_sample);
+
+	% Interpolate to find the output value
+	modulated_output(i) = interp_y1 + (interp_y2 - interp_y1) * (query_sample);
 
 	% Save the input's current value in the ring buffer and advance to the next value
 	new_sample = (input(i) + modulated_output(i) * feedback);

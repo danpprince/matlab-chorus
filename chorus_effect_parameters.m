@@ -2,6 +2,7 @@ filename        = 'Joey sassy guitar.wav';
 output_filename = 'Joey sassy guitar - output.wav';
 
 play_output = true;
+loop_timer = true;
 
 delay_length     = 0.040;  % sec
 modulation_depth = 0.0008;  % sec

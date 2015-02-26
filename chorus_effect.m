@@ -17,7 +17,10 @@ delay_buffer     = zeros(delay_length_samples + modulation_depth_samples, 1);
 % the appropriate argument in radians to achieve the specified modulation rate
 modulation_argument = 2 * pi * modulation_rate / sample_rate;
 
-tic
+if loop_timer
+	tic
+end
+
 for i = 1:(length(input))
 	% Find index to read from for modulated output
 	modulated_sample = modulation_depth_samples * sin(modulation_argument * i);
@@ -34,7 +37,10 @@ for i = 1:(length(input))
 	new_sample = (input(i) + modulated_output(i) * feedback);
 	delay_buffer = [ new_sample; delay_buffer(1 : length(delay_buffer)-1) ];
 end
-toc
+
+if loop_timer
+	toc
+end
 
 summed_output = ((1 - dry_wet_balance) * input(:, 1) ) + (dry_wet_balance * modulated_output);
 

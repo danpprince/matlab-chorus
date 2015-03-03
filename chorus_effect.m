@@ -46,11 +46,9 @@ end
 
 %% Create low shelf filter
 % Shout out to http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
-f0     = 800; % Hz
-dBgain = -9; % dB
-w0     = 2 * pi * f0 / sample_rate;
+w0     = 2 * pi * low_shelf_freq / sample_rate;
 S      = 0.5;
-A      = 10 ^ (dBgain / 40);
+A      = 10 ^ (low_shelf_gain / 40);
 alpha  = sin(w0) / 2 * sqrt( (A + 1/A) * (1/S - 1) + 2 );
 
 b0 =    A*( (A+1) - (A-1)*cos(w0) + 2*sqrt(A)*alpha );
@@ -68,7 +66,7 @@ H_dB = 20*log10(abs(H));
 
 figure('Position',[25, 50, 750, 600])
 
-subplot(2, 1, 1); semilogx(f, H_dB, f0, -3, 'o'); axis([20, 20e3, min(H_dB), max(H_dB)])
+subplot(2, 1, 1); semilogx(f, H_dB); axis([20, 20e3, min(H_dB), max(H_dB)])
 title('Frequency response of low shelf EQ')
 ylabel('Gain (dB)')
 xlabel('Frequency (Hz)')

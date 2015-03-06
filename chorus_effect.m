@@ -11,8 +11,6 @@ modulation_depth_samples = round(modulation_depth * sample_rate);
 modulated_output = zeros(length(input), 1);
 delay_buffer     = zeros(delay_length_samples + modulation_depth_samples, 1);
 
-%%
-
 % Argument for sin() modulation function. Converts the loop's control variable into 
 % the appropriate argument in radians to achieve the specified modulation rate
 modulation_argument = 2 * pi * modulation_rate / sample_rate;
@@ -35,7 +33,7 @@ for i = 1:(length(input))
 	% Interpolate to find the output value
 	modulated_output(i) = interp_y1 + (interp_y2 - interp_y1) * (query_sample);
 
-	% Save the input's current value in the ring buffer and advance to the next value
+	% Save the input's current value in the buffer and advance to the next value
 	new_sample = (input(i) + modulated_output(i) * feedback);
 	delay_buffer = [ new_sample; delay_buffer(1 : length(delay_buffer)-1) ];
 end
@@ -62,6 +60,7 @@ a2 =        (A+1) + (A-1)*cos(w0) - 2*sqrt(A)*alpha;
 [H, W] = freqz([b0, b1, b2], [a0, a1, a2], 500);
 f = W / (2 * pi) * sample_rate;
 
+% Find the decibel version of the EQ's frequency response
 H_dB = 20*log10(abs(H));
 
 figure('Position',[25, 50, 750, 600])
@@ -73,30 +72,29 @@ xlabel('Frequency (Hz)')
 
 len = length(modulated_output);
 
-	NFFT = 2^nextpow2(len); % Next power of 2 from length of y
-	f = sample_rate / 2 * linspace(0, 1, NFFT/2+1);
+NFFT = 2^nextpow2(len); % Next power of 2 from length of y
+f = sample_rate / 2 * linspace(0, 1, NFFT/2+1);
+Mod_FFT = fft(modulated_output,NFFT) / len;
 
-	Mod_FFT = fft(modulated_output,NFFT) / len;
-
-	% Plot single-sided amplitude spectrum.
-	subplot(2, 1, 2); semilogx(f, abs(Mod_FFT(1:NFFT/2+1)));
+% Plot single-sided amplitude spectrum of the modulated signal before EQ.
+subplot(2, 1, 2); semilogx(f, abs(Mod_FFT(1:NFFT/2+1)));
 
 % Apply low shelf EQ to the modulated signal
 modulated_output = filter([b0, b1, b2], [a0, a1, a2], modulated_output);
-
 Mod_EQ_FFT = fft(modulated_output,NFFT) / len;
 
-	% Plot single-sided amplitude spectrum.
-	hold; semilogx(f, abs(Mod_EQ_FFT(1:NFFT/2+1)), 'r'); axis([20, 20e3, 0, max(abs(Mod_FFT))]);
-	title('Single-Sided Spectrum')
-	xlabel('Frequency (Hz)')
-	ylabel('|Y(f)| (dB)')
-	legend('Modulated', 'Modulated & EQed')
+% Plot single-sided amplitude spectrum of the modulated signal after EQ.
+hold; semilogx(f, abs(Mod_EQ_FFT(1:NFFT/2+1)), 'r'); 
+
+axis([20, 20e3, 0, max(abs(Mod_FFT))]);
+title('Single-Sided Spectrum')
+xlabel('Frequency (Hz)')
+ylabel('|Y(f)| (dB)')
+legend('Modulated', 'Modulated & EQed')
 
 
 % Add the dry and wet signals to get the final mixed version
 summed_output = ((1 - dry_wet_balance) * input(:, 1) ) + (dry_wet_balance * modulated_output);
-
 
 % Plot the input, modulated signal, and summed output signal
 xmin =  1; xmax = length(input);
